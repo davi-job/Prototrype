@@ -10,12 +10,13 @@ config_version=5
 
 [application]
 
-config/name="Testitty"
+config/name="Prototrype"
 run/main_scene="uid://bih15ihpivn2w"
 config/features=PackedStringArray("4.4", "Forward Plus")
 boot_splash/show_image=false
 boot_splash/fullsize=false
 boot_splash/use_filter=false
+config/icon="uid://c1083qeyvbhsq"
 
 [display]
 
