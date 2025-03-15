@@ -18,6 +18,10 @@ boot_splash/fullsize=false
 boot_splash/use_filter=false
 config/icon="uid://c1083qeyvbhsq"
 
+[autoload]
+
+MapGeneration="*res://scenes/map_generation/gen/map_generation.tscn"
+
 [display]
 
 window/stretch/mode="viewport"
