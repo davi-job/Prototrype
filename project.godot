@@ -20,7 +20,7 @@ config/icon="uid://c1083qeyvbhsq"
 
 [autoload]
 
-MapGeneration="*res://scenes/map_generation/gen/map_generation.tscn"
+MapGeneration="*res://scripts/map_gen/map_generation.gd"
 
 [display]
 
