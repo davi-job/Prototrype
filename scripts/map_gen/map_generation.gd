@@ -27,7 +27,7 @@ const MAP_EDGE: PackedScene = preload("uid://cfk4c8u53jxce");
 		return maxMapLinearSize * 2;
 
 ## Map definition
-var map_grid: Dictionary = {};
+var map_grid: Dictionary;
 
 
 # Functions
