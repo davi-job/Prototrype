@@ -13,7 +13,7 @@ texture_region_size = Vector2i(32, 32)
 3:0/0 = 0
 4:0/0 = 0
 5:0/0 = 0
-0:1/next_alternative_id = 2
+0:1/next_alternative_id = 3
 0:1/0 = 0
 0:1/1 = 1
 0:1/1/transpose = true
@@ -40,13 +40,36 @@ texture_region_size = Vector2i(32, 32)
 tile_size = Vector2i(32, 32)
 sources/0 = SubResource("TileSetAtlasSource_7f77x")
 
-[node name="map_generation" type="Node2D"]
+[node name="map_visualization" type="Node2D"]
 script = ExtResource("1_84nca")
 
-[node name="map_tilemap" type="TileMapLayer" parent="."]
+[node name="dungeon_tilemap" type="TileMapLayer" parent="."]
 unique_name_in_owner = true
 tile_set = SubResource("TileSet_qecl5")
 
 [node name="Camera2D" type="Camera2D" parent="."]
 position = Vector2(16, 16)
-zoom = Vector2(2, 2)
+
+[node name="Controls Canvas" type="CanvasLayer" parent="."]
+unique_name_in_owner = true
+
+[node name="gen_btn" type="Button" parent="Controls Canvas"]
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 30.0
+offset_top = -89.0
+offset_right = 182.0
+offset_bottom = -30.0
+grow_vertical = 0
+text = "Generate"
+
+[node name="rooms_count" type="RichTextLabel" parent="Controls Canvas"]
+unique_name_in_owner = true
+offset_left = 20.0
+offset_top = 15.0
+offset_right = 155.0
+offset_bottom = 44.0
+text = "Rooms:"
+
+[connection signal="pressed" from="Controls Canvas/gen_btn" to="." method="_on_gen_btn_pressed"]

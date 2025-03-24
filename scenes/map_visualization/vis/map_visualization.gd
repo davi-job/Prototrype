@@ -3,27 +3,41 @@ extends Node2D;
 
 # Variables
 
-@onready var mapTilemap: TileMapLayer = %map_tilemap;
+@onready var dungeon_tilemap: TileMapLayer = %dungeon_tilemap
+@onready var rooms_count: RichTextLabel = %rooms_count
 
-const MAP_NODE: PackedScene = preload("res://scenes/map_visualization/map_node.tscn");
-const MAP_EDGE: PackedScene = preload("res://scenes/map_visualization/map_edge.tscn");
 
+var map_grid: Dictionary;
 
 # Functions
 
-func getMapNode(nodeRoomType: MapGeneration.roomType = MapGeneration.roomType.NORMAL) -> MapNode:
-	var newNode = MAP_NODE.instantiate();
-	newNode.roomType = nodeRoomType;
-	
-	return newNode;
+func _ready():
+	MapGeneration.dungeonDone.connect(displayDungeon);
 
-func drawMapNode(pos: Vector2i, nodeRoomType: MapGeneration.roomType = MapGeneration.roomType.NORMAL) -> void:
-	mapTilemap.set_cell(pos, 0, Vector2i(nodeRoomType, 0));
+func _on_gen_btn_pressed() -> void:
+	dungeon_tilemap.clear();
+	MapGeneration.startGen();
 
-func drawMapEdge(pos: Vector2i, mapEdgeType: MapGeneration.edgeType = MapGeneration.edgeType.NORMAL, turns: int = 0) -> void:
-	if turns < 0: return;
-	if turns > 3: return;
+func displayDungeon() -> void:
+	map_grid = MapGeneration.map_grid;
+	var mapCoords: Array = map_grid.keys();
 	
-	if mapEdgeType == MapGeneration.edgeType.NORMAL and turns > 1: turns = 1;
+	var room_amount: int = 0;
 	
-	mapTilemap.set_cell(pos, 0, Vector2i(mapEdgeType, 1), turns);
+	for coord in mapCoords:
+		if map_grid[coord] is MapNode:
+			displayRoom(coord);
+			room_amount += 1;
+		elif map_grid[coord] is MapEdge: displayEdge(coord);
+	
+	rooms_count.text = "Rooms: " + str(room_amount);
+
+func displayRoom(roomPos: Vector2i) -> void:
+	var room: MapNode = map_grid[roomPos];
+	
+	dungeon_tilemap.set_cell(roomPos, 0, Vector2i(room.roomType, 0));
+
+func displayEdge(edgePos: Vector2i) -> void:
+	var edge: MapEdge = map_grid[edgePos];
+	
+	dungeon_tilemap.set_cell(edgePos, 0, Vector2i(edge.edgeType, 1), edge.turns);
