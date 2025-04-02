@@ -22,7 +22,7 @@ const MAP_EDGE: PackedScene = preload("uid://cfk4c8u53jxce");
 		elif roomSpawnChance > 100: return 100;
 		else: return roomSpawnChance;
 
-@export var maxMapLinearSize: int = 5:
+@export var maxMapLinearSize: int = 10:
 	get():
 		return maxMapLinearSize * 2;
 
@@ -70,7 +70,16 @@ func generateDungeon(startingPos: Vector2i) -> void:
 			
 			nextLevelRooms.append_array(newRoomPositions);
 		
+		var dungeonRooms: Array[Vector2i] = getRoomsFromGrid();
+		
+		if nextLevelRooms.is_empty() and dungeonRooms.size() < minRooms:
+			if roomsQueue.back():
+				generateDungeon(roomsQueue.back());
+				return;
+		
 		roomsQueue = nextLevelRooms;
+	
+	
 	
 	generateLoops();
 	
@@ -309,3 +318,12 @@ func findDifferent(arr: Array, value) -> int:
 		if arr[index] != value: return index;
 	
 	return -1;
+
+# Helper function that returns all room coords from the map_grid
+func getRoomsFromGrid() -> Array[Vector2i]:
+	var rooms: Array[Vector2i] = [];
+	
+	for nodeCoords in map_grid.keys():
+		if map_grid[nodeCoords] is MapNode:  rooms.append(nodeCoords);
+	
+	return rooms;
