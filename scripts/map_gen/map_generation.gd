@@ -32,6 +32,7 @@ var map_grid: Dictionary;
 
 # Functions
 
+# Starts the gen
 func startGen() -> void:
 	map_grid = {};
 	roomQuantity = randi_range(minRooms, maxRooms);
@@ -70,6 +71,8 @@ func generateDungeon(startingPos: Vector2i) -> void:
 			nextLevelRooms.append_array(newRoomPositions);
 		
 		roomsQueue = nextLevelRooms;
+	
+	generateLoops();
 	
 	dungeonDone.emit();
 
@@ -141,6 +144,35 @@ func generateConnectingRooms(connections: Array[bool], parentRoomPos: Vector2i) 
 	
 	return parentRoomChildrenPos;
 
+# Generate loops in the dungeon based on its leaves
+func generateLoops() -> void:
+	var leaves: Array[Vector2i] = getLeaves();
+	
+	for leaveCoord in leaves:
+		# Gets conneced room direction and node
+		var connectionDirecion: int = findDifferent(map_grid[leaveCoord].connections, null);
+		var parentNode: MapNode = map_grid[leaveCoord].connections[connectionDirecion];
+		
+		# Gets all unconnected adjacent rooms
+		var adjacentRooms: Array[Vector2i] = getAdjacentRooms(leaveCoord, parentNode);
+		
+		# Remove any adjacent room that is connected to the parent node from adjacentRooms array
+		for neighborCoord in adjacentRooms:
+			parentNode.connections.any(func(connection):
+				if map_grid[neighborCoord] == connection:
+					adjacentRooms.pop_at(adjacentRooms.find(neighborCoord));
+			)
+		
+		adjacentRooms.any(func(neighborCoord):
+			if neighborCoord.x == leaveCoord.x or neighborCoord.y == leaveCoord.y:
+				connectAdjacentRooms(leaveCoord, neighborCoord);
+				return true;
+			
+			return false;
+		);
+
+## Helper Functions
+
 # Helper function to create a new room node
 func getMapNode(nodeRoomType: roomType = roomType.NORMAL) -> MapNode:
 	var newNode = MAP_NODE.instantiate();
@@ -191,3 +223,89 @@ func getEdgeRotation(direction: int, mapEdgeType: int) -> int:
 				3: return 2; # Left
 	
 	return 0; # Default rotation
+
+# Helper function that returns all rooms with only one connection (except the root)
+func getLeaves() -> Array[Vector2i]:
+	var leaves: Array[Vector2i];
+	
+	for coord in map_grid.keys():
+		if coord == Vector2i.ZERO: continue;
+		
+		var cnctCount: int = 0;
+		
+		for cnct in map_grid[coord].connections:
+			if cnct != null: cnctCount += 1;
+		
+		if cnctCount == 1: leaves.append(coord);
+	
+	return leaves;
+
+# Helper function that returns an array with all unconected adjacent rooms
+func getAdjacentRooms(nodeCoords: Vector2i, parentNode: MapNode) -> Array[Vector2i]:
+	var directions: Dictionary = {
+		"up-left": Vector2i(-2, -2),
+		"up": Vector2i(0, -2),
+		"up-right": Vector2i(2, -2),
+		"right": Vector2i(2, 0),
+		"left": Vector2i(-2, 0),
+		"down-left": Vector2i(-2, 2),
+		"down": Vector2i(0, 2),
+		"down-right": Vector2i(2, 2),
+	}
+	var adjacentRooms: Array[Vector2i] = [];
+	
+	for dir in directions.keys():
+		var neighborCoord: Vector2i = nodeCoords + directions[dir];
+		if not map_grid.has(neighborCoord): continue;
+		
+		if map_grid[neighborCoord] == parentNode: continue;
+		
+		if map_grid[neighborCoord] is MapNode: adjacentRooms.append(neighborCoord);
+	
+	return adjacentRooms;
+
+# Helper function that connects two adjacent rooms in a sraight connection
+func connectAdjacentRooms(room1Coords: Vector2i, room2Coords: Vector2i) -> void:
+	# Get the difference in each axis for posiion checks
+	var xAxis: int = abs(room1Coords.x - room2Coords.x);
+	var yAxis: int = abs(room1Coords.y - room2Coords.y);
+	
+	# Check if nodes ae direct neighbors
+	if not (xAxis == 2 or yAxis == 2): return;
+	
+	# Check if the nodes are vertical neighbors
+	var areHorizontalNeighbors: bool = (xAxis == 2);
+	var newEdge: MapEdge = getEdgeNode(map_grid[room1Coords], map_grid[room2Coords]);
+	var newEdgePos: Vector2i;
+	
+	if areHorizontalNeighbors:
+		newEdgePos = Vector2i(floor(room1Coords.x + room2Coords.x)/2, room1Coords.y);
+		newEdge.mapPos = newEdgePos;
+		
+		map_grid[newEdgePos] = newEdge;
+		
+		var leftNeighborCoords: Vector2i = room1Coords if room1Coords.x > room2Coords.x else room2Coords;
+		var rightNeighborCoords: Vector2i = room2Coords if leftNeighborCoords == room1Coords else room1Coords;
+		
+		map_grid[leftNeighborCoords].connections[1] = map_grid[rightNeighborCoords];
+		map_grid[rightNeighborCoords].connections[3] = map_grid[leftNeighborCoords];
+		
+	else:
+		newEdgePos = Vector2i(room1Coords.x, floor(room1Coords.y + room2Coords.y)/2);
+		newEdge.mapPos = newEdgePos;
+		
+		newEdge.turns = 1;
+		map_grid[newEdgePos] = newEdge;
+		
+		var upNeighborCoords: Vector2i = room1Coords if room1Coords.y < room2Coords.y else room2Coords;
+		var downNeighborCoords: Vector2i = room2Coords if upNeighborCoords == room1Coords else room1Coords;
+		
+		map_grid[upNeighborCoords].connections[2] = map_grid[downNeighborCoords];
+		map_grid[downNeighborCoords].connections[0] = map_grid[upNeighborCoords];
+
+# Helper function to find the first element != from value in an array and return its index
+func findDifferent(arr: Array, value) -> int:
+	for index in arr.size():
+		if arr[index] != value: return index;
+	
+	return -1;
